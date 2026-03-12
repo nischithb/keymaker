@@ -2,6 +2,7 @@ import { db } from "@/db";
 import { Constraints, usersTable } from "@/db/schema";
 import { EmailAlreadyExists } from "../errors";
 import { checkForUniqueViolation } from "@/db/errors";
+import { eq } from "drizzle-orm";
 
 /**
  * @returns object with `id` of the created user
@@ -27,8 +28,18 @@ async function createUser(userData: {
   }
 }
 
+async function getUserPasswordByEmail(email: string) {
+  const [user] = await db
+    .select({ id: usersTable.id, password: usersTable.password })
+    .from(usersTable)
+    .where(eq(usersTable.email, email))
+    .limit(1);
+  return user ?? null;
+}
+
 const userRepository = {
   createUser,
+  getUserPasswordByEmail,
 };
 
 export default userRepository;

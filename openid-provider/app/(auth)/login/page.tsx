@@ -1,8 +1,14 @@
 "use client";
 
-import { signup } from "@/app/actions";
+import { login } from "@/app/actions";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   Field,
   FieldDescription,
@@ -17,11 +23,8 @@ import Link from "next/link";
 import { useActionState } from "react";
 
 export default function Page() {
-  const [state, action, isPending] = useActionState(signup, null);
+  const [state, action, isPending] = useActionState(login, null);
 
-  const nameFieldErrors = state?.fieldErrors?.name?.map((error) => ({
-    message: error,
-  }));
   const emailFieldErrors = state?.fieldErrors?.email?.map((error) => ({
     message: error,
   }));
@@ -32,26 +35,15 @@ export default function Page() {
 
   return (
     <Card className="w-full max-w-sm">
-      <CardHeader className="text-center">
-        <CardTitle className="text-lg">Create your account</CardTitle>
+      <CardHeader className="text-center mb-2">
+        <CardTitle className="text-lg">Welcome back</CardTitle>
+        <CardDescription className="text-sm">
+          Login to your account
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <form action={action}>
-          <FieldGroup className="gap-6">
-            <Field>
-              <FieldLabel htmlFor="name">Full Name</FieldLabel>
-              <Input
-                id="name"
-                name="name"
-                type="text"
-                autoComplete="name"
-                defaultValue={state?.values?.name}
-                disabled={isPending}
-                required
-              />
-              <FieldError errors={nameFieldErrors} />
-            </Field>
-
+          <FieldGroup>
             <Field>
               <FieldLabel htmlFor="email">Email</FieldLabel>
               <Input
@@ -67,18 +59,17 @@ export default function Page() {
             </Field>
 
             <Field>
-              <FieldLabel htmlFor="password">Password</FieldLabel>
+              <div className="flex items-center justify-between">
+                <FieldLabel htmlFor="password">Password</FieldLabel>
+                <Link href="#">Forgot your password?</Link>
+              </div>
               <PasswordInput
                 id="password"
                 name="password"
-                autoComplete="new-password"
-                defaultValue={state?.values?.password}
+                autoComplete="current-password"
                 disabled={isPending}
                 required
               />
-              {(passwordFieldErrors?.length ?? 0 > 0) && (
-                <p className="text-destructive text-xs">Password must:</p>
-              )}
               <FieldError errors={passwordFieldErrors} />
             </Field>
 
@@ -87,10 +78,10 @@ export default function Page() {
             <Field>
               <Button type="submit" disabled={isPending}>
                 {isPending && <SpinnerIcon className="animate-spin" />}
-                Create Account
+                Login
               </Button>
               <FieldDescription className="text-center">
-                Already have an account? <Link href="/login">Sign in</Link>
+                Don&apos;t have an account? <Link href="/signup">Sign up</Link>
               </FieldDescription>
             </Field>
           </FieldGroup>

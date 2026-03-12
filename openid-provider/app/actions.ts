@@ -1,10 +1,10 @@
 "use server";
 
-import { SignupFormSchema } from "@/lib/definitions";
+import { LoginFormSchema, SignupFormSchema } from "@/lib/definitions";
 import { EmailAlreadyExists } from "@/lib/errors";
 import userRepository from "@/lib/repositories/user";
 import { createSession, deleteSession } from "@/lib/session";
-import { hashPassword } from "@/lib/server-utils";
+import { hashPassword, verifyPassword } from "@/lib/server-utils";
 import { redirect } from "next/navigation";
 import z from "zod";
 import { FormActionResponse } from "@/lib/utils";
@@ -53,6 +53,54 @@ export async function signup(
   redirect("/account");
 }
 
+export async function login(
+  state: unknown,
+  formData: FormData,
+): Promise<FormActionResponse<z.infer<typeof LoginFormSchema>>> {
+  const data = {
+    email: formData.get("email")?.toString(),
+    password: formData.get("password")?.toString(),
+  };
+
+  const validationResult = LoginFormSchema.safeParse(data);
+  if (!validationResult.success) {
+    return {
+      ...z.flattenError(validationResult.error),
+      success: false,
+      values: data,
+    };
+  }
+
+  const errorResponse = {
+    success: false,
+    formErrors: ["Incorrect email or password"],
+    values: data,
+  };
+
+  try {
+    const user = await userRepository.getUserPasswordByEmail(
+      validationResult.data.email,
+    );
+    if (!user) return errorResponse;
+
+    const isSuccess = await verifyPassword(
+      user.password,
+      validationResult.data.password,
+    );
+    if (!isSuccess) return errorResponse;
+
+    await createSession(user.id);
+  } catch (error) {
+    console.error(error);
+    return {
+      success: false,
+      formErrors: ["Sorry, Something went wrong on our end. Please try again"],
+    };
+  }
+
+  redirect("/account");
+}
+
 export async function logout() {
   try {
     await deleteSession();
@@ -60,5 +108,5 @@ export async function logout() {
     console.error(error);
     return { success: false };
   }
-  redirect("/signup");
+  redirect("/login");
 }
