@@ -5,7 +5,7 @@ export default async function Layout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   if (!(await verifySession())) {
-    redirect("/signup");
+    redirect("/login");
   }
   return <>{children}</>;
 }
