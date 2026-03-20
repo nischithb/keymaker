@@ -1,8 +1,9 @@
 import "server-only";
-import { randomBytes } from "crypto";
 import { cookies } from "next/headers";
 import sessionRepository from "./repositories/session";
 import { SessionTokenAlreadyExists } from "./errors";
+import { generateRandomString } from "./server-utils";
+import { cache } from "react";
 
 const cookie = {
   name: "session-token",
@@ -13,7 +14,7 @@ const cookie = {
 } as const;
 
 function generateSessionToken() {
-  return randomBytes(32).toString("base64url");
+  return generateRandomString(32);
 }
 
 export async function createSession(userId: string) {
@@ -47,26 +48,31 @@ export async function createSession(userId: string) {
 }
 
 /**
- * Note: deletes session in the database if session expired,
+ * @returns userId on successful verification else false
+ * @description Deletes session in the database if session expired,
  * but does not mutate cookie, safe to use in RSC
  * @see https://nextjs.org/docs/app/api-reference/functions/cookies#understanding-cookie-behavior-in-server-components
  */
-export async function verifySession(): Promise<boolean> {
+async function _verifySession(): Promise<
+  { success: true; userId: string } | { success: false }
+> {
   const cookieStore = await cookies();
   const sessionCookie = cookieStore.get(cookie.name);
-  if (!sessionCookie) return false;
+  if (!sessionCookie) return { success: false };
 
   const session = await sessionRepository.getSessionByToken(
     sessionCookie.value,
   );
-  if (!session) return false;
+  if (!session) return { success: false };
 
   if (session.expiresAt <= new Date()) {
     await sessionRepository.deleteSessionByToken(sessionCookie.value);
-    return false;
+    return { success: false };
   }
-  return true;
+  return { success: true, userId: session.userId };
 }
+
+export const verifySession = cache(_verifySession);
 
 export async function deleteSession() {
   const cookieStore = await cookies();

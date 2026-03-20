@@ -15,5 +15,15 @@ export const SignupFormSchema = z.object({
 
 export const LoginFormSchema = z.object({
   email: z.string().trim().toLowerCase().pipe(z.email()),
-  password: z.string().min(1, "Password can't be empty").max(128, "Password is too long")
-})
+  password: z
+    .string()
+    .min(1, "Password can't be empty")
+    .max(128, "Password is too long"),
+});
+
+export const RegisterApplicationSchema = z.object({
+  name: z.string().trim().min(2, "Name must be atleast 2 characters long"),
+  description: z.string().trim(),
+  homepageUrl: z.httpUrl(),
+  callbackUrl: z.httpUrl(),
+});

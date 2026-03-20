@@ -19,17 +19,6 @@ import { useActionState } from "react";
 export default function Page() {
   const [state, action, isPending] = useActionState(signup, null);
 
-  const nameFieldErrors = state?.fieldErrors?.name?.map((error) => ({
-    message: error,
-  }));
-  const emailFieldErrors = state?.fieldErrors?.email?.map((error) => ({
-    message: error,
-  }));
-  const passwordFieldErrors = state?.fieldErrors?.password?.map((error) => ({
-    message: error,
-  }));
-  const formErrors = state?.formErrors?.map((error) => ({ message: error }));
-
   return (
     <Card className="w-full max-w-sm">
       <CardHeader className="text-center">
@@ -49,7 +38,7 @@ export default function Page() {
                 disabled={isPending}
                 required
               />
-              <FieldError errors={nameFieldErrors} />
+              <FieldError errors={state?.fieldErrors?.name} />
             </Field>
 
             <Field>
@@ -63,7 +52,7 @@ export default function Page() {
                 disabled={isPending}
                 required
               />
-              <FieldError errors={emailFieldErrors} />
+              <FieldError errors={state?.fieldErrors?.email} />
             </Field>
 
             <Field>
@@ -76,13 +65,13 @@ export default function Page() {
                 disabled={isPending}
                 required
               />
-              {(passwordFieldErrors?.length ?? 0 > 0) && (
+              {(state?.fieldErrors?.password?.length ?? 0 > 0) && (
                 <p className="text-destructive text-xs">Password must:</p>
               )}
-              <FieldError errors={passwordFieldErrors} />
+              <FieldError errors={state?.fieldErrors?.password} />
             </Field>
 
-            <FieldError errors={formErrors} />
+            <FieldError errors={state?.formErrors} />
 
             <Field>
               <Button type="submit" disabled={isPending}>

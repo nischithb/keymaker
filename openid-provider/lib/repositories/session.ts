@@ -6,7 +6,10 @@ import { SessionTokenAlreadyExists } from "../errors";
 
 async function getSessionByToken(sessionToken: string) {
   const [session] = await db
-    .select({ expiresAt: sessionsTable.expiresAt })
+    .select({
+      userId: sessionsTable.userId,
+      expiresAt: sessionsTable.expiresAt,
+    })
     .from(sessionsTable)
     .where(eq(sessionsTable.token, sessionToken))
     .limit(1);
@@ -25,7 +28,7 @@ async function createSession(sessionData: typeof sessionsTable.$inferInsert) {
       .returning({ id: sessionsTable.id });
     return session ?? null;
   } catch (error) {
-    if (checkForUniqueViolation(error, Constraints.SESSIONS_TOKEN_UNIQUE)) {
+    if (checkForUniqueViolation(error, Constraints.SESSIONS_TOKEN_UQ)) {
       throw new SessionTokenAlreadyExists();
     }
     throw error;
