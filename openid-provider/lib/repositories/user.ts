@@ -12,7 +12,7 @@ import { eq } from "drizzle-orm";
 async function createUser(userData: {
   name: string;
   email: string;
-  password: string;
+  passwordHash: string;
 }) {
   try {
     const [user] = await db
@@ -21,16 +21,16 @@ async function createUser(userData: {
       .returning({ id: usersTable.id });
     return user ?? null;
   } catch (error) {
-    if (checkForUniqueViolation(error, Constraints.USERS_EMAIL_UNIQUE)) {
+    if (checkForUniqueViolation(error, Constraints.USERS_EMAIL_UQ)) {
       throw new EmailAlreadyExists();
     }
     throw error;
   }
 }
 
-async function getUserPasswordByEmail(email: string) {
+async function getPasswordHashByEmail(email: string) {
   const [user] = await db
-    .select({ id: usersTable.id, password: usersTable.password })
+    .select({ id: usersTable.id, password: usersTable.passwordHash })
     .from(usersTable)
     .where(eq(usersTable.email, email))
     .limit(1);
@@ -39,7 +39,7 @@ async function getUserPasswordByEmail(email: string) {
 
 const userRepository = {
   createUser,
-  getUserPasswordByEmail,
+  getPasswordHashByEmail,
 };
 
 export default userRepository;

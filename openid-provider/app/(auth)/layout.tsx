@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 export default async function Layout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  if (await verifySession()) {
+  if ((await verifySession()).success) {
     redirect("/account");
   }
   return (

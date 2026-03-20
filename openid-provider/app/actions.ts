@@ -4,7 +4,7 @@ import { LoginFormSchema, SignupFormSchema } from "@/lib/definitions";
 import { EmailAlreadyExists } from "@/lib/errors";
 import userRepository from "@/lib/repositories/user";
 import { createSession, deleteSession } from "@/lib/session";
-import { hashPassword, verifyPassword } from "@/lib/server-utils";
+import { hashString, verifyHash } from "@/lib/server-utils";
 import { redirect } from "next/navigation";
 import z from "zod";
 import { FormActionResponse } from "@/lib/utils";
@@ -31,7 +31,7 @@ export async function signup(
   try {
     const userData = {
       ...validationResult.data,
-      password: await hashPassword(validationResult.data.password),
+      passwordHash: await hashString(validationResult.data.password),
     };
     const user = await userRepository.createUser(userData);
     if (!user) throw new Error("Failed to create user");
@@ -78,12 +78,12 @@ export async function login(
   };
 
   try {
-    const user = await userRepository.getUserPasswordByEmail(
+    const user = await userRepository.getPasswordHashByEmail(
       validationResult.data.email,
     );
     if (!user) return errorResponse;
 
-    const isSuccess = await verifyPassword(
+    const isSuccess = await verifyHash(
       user.password,
       validationResult.data.password,
     );
