@@ -37,9 +37,19 @@ async function getPasswordHashByEmail(email: string) {
   return user ?? null;
 }
 
+async function getPasswordHashByUserId(userId: string) {
+  const [user] = await db
+    .select({ passwordHash: usersTable.passwordHash })
+    .from(usersTable)
+    .where(eq(usersTable.id, userId))
+    .limit(1);
+  return user ?? null;
+}
+
 const userRepository = {
   createUser,
   getPasswordHashByEmail,
+  getPasswordHashByUserId,
 };
 
 export default userRepository;

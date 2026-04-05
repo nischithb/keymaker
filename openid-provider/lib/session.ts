@@ -4,6 +4,7 @@ import sessionRepository from "./repositories/session";
 import { SessionTokenAlreadyExists } from "./errors";
 import { generateRandomString } from "./server-utils";
 import { cache } from "react";
+import { err, ok, ResultAsync } from "./utils";
 
 const cookie = {
   name: "session-token",
@@ -47,32 +48,39 @@ export async function createSession(userId: string) {
   cookieStore.set({ value: sessionToken, ...cookie });
 }
 
+async function _verifySession() {
+  const cookieStore = await cookies();
+  const sessionCookie = cookieStore.get(cookie.name);
+  if (!sessionCookie) return null;
+
+  const session = await sessionRepository.getSessionByToken(
+    sessionCookie.value,
+  );
+  if (!session) return null;
+
+  if (session.expiresAt <= new Date()) {
+    await sessionRepository.deleteSessionByToken(sessionCookie.value);
+    return null;
+  }
+  return session;
+}
+
 /**
  * @returns userId on successful verification else false
  * @description Deletes session in the database if session expired,
  * but does not mutate cookie, safe to use in RSC
  * @see https://nextjs.org/docs/app/api-reference/functions/cookies#understanding-cookie-behavior-in-server-components
  */
-async function _verifySession(): Promise<
-  { success: true; userId: string } | { success: false }
-> {
-  const cookieStore = await cookies();
-  const sessionCookie = cookieStore.get(cookie.name);
-  if (!sessionCookie) return { success: false };
-
-  const session = await sessionRepository.getSessionByToken(
-    sessionCookie.value,
-  );
-  if (!session) return { success: false };
-
-  if (session.expiresAt <= new Date()) {
-    await sessionRepository.deleteSessionByToken(sessionCookie.value);
-    return { success: false };
-  }
-  return { success: true, userId: session.userId };
-}
-
-export const verifySession = cache(_verifySession);
+export const verifySession = cache(
+  async (): ResultAsync<
+    { userId: string; sessionId: string },
+    "invalid_session"
+  > => {
+    const session = await _verifySession();
+    if (!session) return err("invalid_session");
+    else return ok({ userId: session.userId, sessionId: session.id });
+  },
+);
 
 export async function deleteSession() {
   const cookieStore = await cookies();
@@ -80,4 +88,16 @@ export async function deleteSession() {
   if (!sessionCookie) return;
   await sessionRepository.deleteSessionByToken(sessionCookie.value);
   cookieStore.delete(cookie.name);
+}
+
+export async function verifySudoSession(): ResultAsync<
+  { userId: string },
+  "invalid_session" | "not_sudo"
+> {
+  const session = await _verifySession();
+  if (!session) return err("invalid_session");
+  if (!session.sudoExpiresAt || session.sudoExpiresAt < new Date()) {
+    return err("not_sudo");
+  }
+  return ok({ userId: session.userId });
 }

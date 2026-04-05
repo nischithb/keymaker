@@ -51,6 +51,7 @@ export const sessionsTable = pgTable(
     token: text("token").notNull(),
     userId: uuid("user_id").notNull(),
     expiresAt: timestamp("expires_at").notNull(),
+    sudoExpiresAt: timestamp("sudo_expires_at"),
     createdAt,
   },
   (t) => [

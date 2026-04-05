@@ -12,7 +12,7 @@ import { FormActionResponse } from "@/lib/utils";
 export async function signup(
   state: unknown,
   formData: FormData,
-): Promise<FormActionResponse<z.infer<typeof SignupFormSchema>>> {
+): FormActionResponse<z.infer<typeof SignupFormSchema>> {
   const data = {
     name: formData.get("name")?.toString(),
     email: formData.get("email")?.toString(),
@@ -56,7 +56,7 @@ export async function signup(
 export async function login(
   state: unknown,
   formData: FormData,
-): Promise<FormActionResponse<z.infer<typeof LoginFormSchema>>> {
+): FormActionResponse<z.infer<typeof LoginFormSchema>> {
   const data = {
     email: formData.get("email")?.toString(),
     password: formData.get("password")?.toString(),

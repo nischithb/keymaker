@@ -1,0 +1,1 @@
+ALTER TABLE "sessions" ADD COLUMN "sudo_expires_at" timestamp;
