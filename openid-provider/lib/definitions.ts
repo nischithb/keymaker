@@ -21,9 +21,25 @@ export const LoginFormSchema = z.object({
     .max(128, "Password is too long"),
 });
 
-export const RegisterApplicationSchema = z.object({
+const appConfigurationSchema = {
   name: z.string().trim().min(2, "Name must be atleast 2 characters long"),
-  description: z.string().trim(),
+  description: z.string().trim().optional(),
   homepageUrl: z.httpUrl(),
   callbackUrl: z.httpUrl(),
+};
+
+export const RegisterApplicationSchema = z.object({
+  ...appConfigurationSchema,
+});
+
+export const UpdateApplicationSchema = z.object({
+  ...appConfigurationSchema,
+  id: z.string().trim(),
+});
+
+export const PasswordReauthSchema = z.object({
+  password: z
+    .string()
+    .min(1, "Password can't be empty")
+    .max(128, "Password is too long"),
 });

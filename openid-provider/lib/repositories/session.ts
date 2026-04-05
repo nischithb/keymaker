@@ -7,8 +7,10 @@ import { SessionTokenAlreadyExists } from "../errors";
 async function getSessionByToken(sessionToken: string) {
   const [session] = await db
     .select({
+      id: sessionsTable.id,
       userId: sessionsTable.userId,
       expiresAt: sessionsTable.expiresAt,
+      sudoExpiresAt: sessionsTable.sudoExpiresAt,
     })
     .from(sessionsTable)
     .where(eq(sessionsTable.token, sessionToken))
@@ -39,10 +41,20 @@ async function deleteSessionByToken(sessionToken: string) {
   await db.delete(sessionsTable).where(eq(sessionsTable.token, sessionToken));
 }
 
+async function upgradeToSudoById(sessionId: string, sudoDuration: number) {
+  const [session] = await db
+    .update(sessionsTable)
+    .set({ sudoExpiresAt: new Date(Date.now() + sudoDuration) })
+    .where(eq(sessionsTable.id, sessionId))
+    .returning({ id: sessionsTable.id });
+  return session ?? null;
+}
+
 const sessionRepository = {
   getSessionByToken,
   createSession,
   deleteSessionByToken,
+  upgradeToSudoById,
 };
 
 export default sessionRepository;
